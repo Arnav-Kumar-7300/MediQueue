@@ -6,7 +6,7 @@ public class InputValidator {
 
         return name != null
                 && !name.trim().isEmpty()
-                && name.matches("[a-zA-Z ]+");
+                && name.matches("[a-zA-Z. ]+");
     }
 
     public static boolean isValidPhone(String phone) {

@@ -1,6 +1,12 @@
+import exception.DoctorNotFoundException;
 import exception.PatientNotFoundException;
+
+import model.Doctor;
 import model.Patient;
+
+import service.DoctorService;
 import service.PatientService;
+
 import util.InputValidator;
 
 import java.util.Scanner;
@@ -10,6 +16,9 @@ public class Main {
     private static final Scanner scanner = new Scanner(System.in);
     private static final PatientService patientService =
             new PatientService();
+
+    private static final DoctorService doctorService =
+            new DoctorService();
 
     public static void main(String[] args) {
 
@@ -25,6 +34,10 @@ public class Main {
 
                 case 1:
                     patientManagementMenu();
+                    break;
+
+                case 2:
+                    doctorManagementMenu();
                     break;
 
                 case 7:
@@ -449,6 +462,481 @@ public class Main {
                         "Invalid input. Please enter a number."
                 );
             }
+        }
+    }
+
+    private static void doctorManagementMenu() {
+
+        boolean running = true;
+
+        while (running) {
+
+            System.out.println("\n========== DOCTOR MANAGEMENT ==========");
+
+            System.out.println("1. Add Doctor");
+            System.out.println("2. View All Doctors");
+            System.out.println("3. Search Doctor");
+            System.out.println("4. Search by Specialization");
+            System.out.println("5. Update Doctor");
+            System.out.println("6. Change Availability");
+            System.out.println("7. Delete Doctor");
+            System.out.println("8. Back");
+
+            int choice = readInteger("Enter your choice: ");
+
+            switch (choice) {
+
+                case 1:
+                    addDoctor();
+                    break;
+
+                case 2:
+                    viewAllDoctors();
+                    break;
+
+                case 3:
+                    searchDoctor();
+                    break;
+
+                case 4:
+                    searchDoctorsBySpecialization();
+                    break;
+
+                case 5:
+                    updateDoctor();
+                    break;
+
+                case 6:
+                    changeDoctorAvailability();
+                    break;
+
+                case 7:
+                    deleteDoctor();
+                    break;
+
+                case 8:
+                    running = false;
+                    break;
+
+                default:
+                    System.out.println(
+                        "Invalid choice. Please try again."
+                );
+            }
+        }
+    }
+
+    private static void addDoctor() {
+
+        System.out.println("\n---------- ADD DOCTOR ----------");
+
+        String name;
+
+        while (true) {
+
+            System.out.print("Enter doctor name: ");
+            name = scanner.nextLine();
+
+            if (InputValidator.isValidName(name)) {
+                break;
+            }
+
+            System.out.println(
+                    "Invalid name. Use alphabets and spaces only."
+            );
+        }
+
+        String phone;
+
+        while (true) {
+
+            System.out.print("Enter phone number: ");
+            phone = scanner.nextLine();
+
+            if (InputValidator.isValidPhone(phone)) {
+                break;
+            }
+
+            System.out.println(
+                    "Invalid phone number. Enter exactly 10 digits."
+            );
+        }
+
+        String email;
+
+        while (true) {
+
+            System.out.print("Enter email: ");
+            email = scanner.nextLine();
+
+            if (InputValidator.isValidEmail(email)) {
+                break;
+            }
+
+            System.out.println("Invalid email address.");
+        }
+
+        String specialization;
+
+        while (true) {
+
+            System.out.print("Enter specialization: ");
+            specialization = scanner.nextLine();
+
+            if (!specialization.trim().isEmpty()) {
+                break;
+            }
+
+            System.out.println(
+                    "Specialization cannot be empty."
+            );
+        }
+
+        String qualification;
+
+         while (true) {
+
+            System.out.print("Enter qualification: ");
+            qualification = scanner.nextLine();
+
+            if (!qualification.trim().isEmpty()) {
+                break;
+            }
+
+            System.out.println(
+                    "Qualification cannot be empty."
+            );
+        }
+
+        Doctor doctor = doctorService.addDoctor(
+                name,
+                phone,
+                email,
+                specialization,
+                qualification
+        );
+
+        System.out.println("\nDoctor added successfully!");
+        System.out.println(
+                "Generated Doctor ID: " + doctor.getId()
+        );
+    }
+
+    private static void viewAllDoctors() {
+
+        System.out.println("\n---------- ALL DOCTORS ----------");
+
+        if (doctorService.getAllDoctors().isEmpty()) {
+
+            System.out.println("No doctors registered yet.");
+            return;
+        }
+
+        for (Doctor doctor : doctorService.getAllDoctors()) {
+
+            doctor.displayDetails();
+
+            System.out.println("----------------------------------");
+        }
+
+        System.out.println(
+                "Total Doctors: "
+                        + doctorService.getDoctorCount()
+        );
+
+        System.out.println(
+                "Available Doctors: "
+                        + doctorService.getAvailableDoctorCount()
+        );
+    }
+
+    private static void searchDoctor() {
+
+        System.out.println("\n---------- SEARCH DOCTOR ----------");
+
+        System.out.print("Enter Doctor ID: ");
+        String doctorId = scanner.nextLine();
+
+        try {
+
+            Doctor doctor =
+                    doctorService.findDoctorById(doctorId);
+
+            doctor.displayDetails();
+
+        } catch (DoctorNotFoundException e) {
+
+            System.out.println(
+                    "ERROR: " + e.getMessage()
+            );
+        }
+    }
+
+    private static void searchDoctorsBySpecialization() {
+
+        System.out.println(
+                "\n---------- SEARCH BY SPECIALIZATION ----------"
+        );
+
+        System.out.print("Enter specialization: ");
+        String specialization = scanner.nextLine();
+
+        var doctors =
+                doctorService.findDoctorsBySpecialization(
+                        specialization
+                );
+
+        if (doctors.isEmpty()) {
+
+            System.out.println(
+                    "No doctors found for specialization: "
+                            + specialization
+            );
+
+            return;
+        }
+
+        System.out.println(
+                "\nDoctors specializing in "
+                        + specialization + ":"
+        );
+
+        System.out.println();
+
+        for (Doctor doctor : doctors) {
+
+            doctor.displayDetails();
+
+            System.out.println("----------------------------------");
+        }
+    }
+
+    private static void updateDoctor() {
+
+        System.out.println("\n---------- UPDATE DOCTOR ----------");
+
+        System.out.print("Enter Doctor ID: ");
+        String doctorId = scanner.nextLine();
+
+        try {
+
+            Doctor doctor =
+                    doctorService.findDoctorById(doctorId);
+
+            System.out.println(
+                    "Updating doctor: "
+                            + doctor.getName()
+            );
+
+            String name;
+
+            while (true) {
+
+                System.out.print("Enter new name: ");
+                name = scanner.nextLine();
+
+                if (InputValidator.isValidName(name)) {
+                    break;
+                }
+
+                System.out.println("Invalid name.");
+            }
+
+            String phone;
+
+            while (true) {
+
+                System.out.print("Enter new phone: ");
+                phone = scanner.nextLine();
+
+                if (InputValidator.isValidPhone(phone)) {
+                    break;
+                }
+
+                System.out.println(
+                        "Phone must contain exactly 10 digits."
+                );
+            }
+
+            String email;
+
+            while (true) {
+
+                System.out.print("Enter new email: ");
+                email = scanner.nextLine();
+
+                if (InputValidator.isValidEmail(email)) {
+                    break;
+                }
+
+                System.out.println("Invalid email.");
+            }
+
+            String specialization;
+
+            while (true) {
+
+                System.out.print("Enter new specialization: ");
+                specialization = scanner.nextLine();
+
+                if (!specialization.trim().isEmpty()) {
+                    break;
+                }
+
+                System.out.println(
+                        "Specialization cannot be empty."
+                );
+            }
+
+            String qualification;
+
+            while (true) {
+
+                System.out.print("Enter new qualification: ");
+                qualification = scanner.nextLine();
+
+                if (!qualification.trim().isEmpty()) {
+                    break;
+                }
+
+                System.out.println(
+                        "Qualification cannot be empty."
+                );
+            }
+
+            doctorService.updateDoctor(
+                    doctorId,
+                    name,
+                    phone,
+                    email,
+                    specialization,
+                    qualification
+            );
+
+            System.out.println(
+                    "\nDoctor updated successfully!"
+            );
+
+        } catch (DoctorNotFoundException e) {
+
+            System.out.println(
+                    "ERROR: " + e.getMessage()
+            );
+        }
+    }
+
+    private static void changeDoctorAvailability() {
+
+        System.out.println(
+                "\n---------- CHANGE AVAILABILITY ----------"
+        );
+
+        System.out.print("Enter Doctor ID: ");
+        String doctorId = scanner.nextLine();
+
+        try {
+
+            Doctor doctor =
+                    doctorService.findDoctorById(doctorId);
+
+            System.out.println(
+                    "Doctor: " + doctor.getName()
+            );
+
+            System.out.println(
+                    "Current Availability: "
+                            + (doctor.isAvailable()
+                            ? "Available"
+                            : "Unavailable")
+            );
+
+            System.out.println("\n1. Set Available");
+            System.out.println("2. Set Unavailable");
+
+            int choice =
+                    readInteger("Enter choice: ");
+
+            if (choice == 1) {
+
+                doctorService.setDoctorAvailability(
+                        doctorId,
+                        true
+                );
+
+                System.out.println(
+                        "Doctor is now AVAILABLE."
+                );
+
+            } else if (choice == 2) {
+
+                doctorService.setDoctorAvailability(
+                        doctorId,
+                        false
+                );
+
+                System.out.println(
+                        "Doctor is now UNAVAILABLE."
+                );
+
+            } else {
+
+                System.out.println(
+                        "Invalid choice."
+                );
+            }
+
+        } catch (DoctorNotFoundException e) {
+
+            System.out.println(
+                    "ERROR: " + e.getMessage()
+            );
+        }
+    }
+
+    private static void deleteDoctor() {
+
+        System.out.println(
+                "\n---------- DELETE DOCTOR ----------"
+        );
+
+        System.out.print("Enter Doctor ID: ");
+        String doctorId = scanner.nextLine();
+
+        try {
+
+            Doctor doctor =
+                    doctorService.findDoctorById(doctorId);
+
+            System.out.println(
+                    "Doctor: " + doctor.getName()
+            );
+
+            System.out.print(
+                    "Are you sure you want to delete this doctor? (yes/no): "
+            );
+
+            String confirmation = scanner.nextLine();
+
+            if (confirmation.equalsIgnoreCase("yes")) {
+
+                doctorService.deleteDoctor(doctorId);
+
+                System.out.println(
+                        "Doctor deleted successfully!"
+                );
+
+            } else {
+
+                System.out.println(
+                        "Deletion cancelled."
+                );
+            }
+
+        } catch (DoctorNotFoundException e) {
+
+            System.out.println(
+                    "ERROR: " + e.getMessage()
+            );
         }
     }
 }
