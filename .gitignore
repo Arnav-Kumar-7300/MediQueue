@@ -1,0 +1,5 @@
+*.class
+*.log
+.vscode/
+bin/
+out/
