@@ -1,11 +1,18 @@
+import exception.InvalidAppointmentException;
 import exception.DoctorNotFoundException;
 import exception.PatientNotFoundException;
 
+import model.Appointment;
 import model.Doctor;
 import model.Patient;
 
+import service.AppointmentService;
 import service.DoctorService;
 import service.PatientService;
+
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.format.DateTimeParseException;
 
 import util.InputValidator;
 
@@ -19,6 +26,12 @@ public class Main {
 
     private static final DoctorService doctorService =
             new DoctorService();
+
+    private static final AppointmentService appointmentService =
+        new AppointmentService(
+                patientService,
+                doctorService
+        );
 
     public static void main(String[] args) {
 
@@ -38,6 +51,10 @@ public class Main {
 
                 case 2:
                     doctorManagementMenu();
+                    break;
+
+                case 3:
+                    appointmentManagementMenu();
                     break;
 
                 case 7:
@@ -936,6 +953,436 @@ public class Main {
 
             System.out.println(
                     "ERROR: " + e.getMessage()
+            );
+        }
+    }
+
+    private static void appointmentManagementMenu() {
+
+        while (true) {
+
+            System.out.println();
+            System.out.println("=================================");
+            System.out.println("      APPOINTMENT MANAGEMENT");
+            System.out.println("=================================");
+            System.out.println("1. Book Appointment");
+            System.out.println("2. View All Appointments");
+            System.out.println("3. Search Appointment");
+            System.out.println("4. View Patient Appointments");
+            System.out.println("5. View Doctor Appointments");
+            System.out.println("6. Cancel Appointment");
+            System.out.println("7. Reschedule Appointment");
+            System.out.println("8. Complete Appointment");
+            System.out.println("9. Back");
+            System.out.println("=================================");
+
+            int choice = readInteger(
+                    "Enter your choice: "
+            );
+
+            switch (choice) {
+
+                case 1:
+                    bookAppointment();
+                    break;
+
+                case 2:
+                    viewAllAppointments();
+                    break;
+
+                case 3:
+                    searchAppointment();
+                    break;
+
+                case 4:
+                    viewPatientAppointments();
+                    break;
+
+                case 5:
+                    viewDoctorAppointments();
+                    break;
+
+                case 6:
+                    cancelAppointment();
+                    break;
+
+                case 7:
+                    rescheduleAppointment();
+                    break;
+
+                case 8:
+                    completeAppointment();
+                    break;
+
+                case 9:
+                    return;
+
+                default:
+                    System.out.println(
+                            "Invalid choice. Please try again."
+                    );
+            }
+        }
+    }
+
+    private static void bookAppointment() {
+
+        System.out.println();
+        System.out.println("---------- Book Appointment ----------");
+
+        System.out.print("Enter Patient ID: ");
+        String patientId = scanner.nextLine().trim();
+
+        System.out.print("Enter Doctor ID: ");
+        String doctorId = scanner.nextLine().trim();
+
+        LocalDate date;
+
+        while (true) {
+
+            System.out.print(
+                    "Enter appointment date (YYYY-MM-DD): "
+            );
+
+            String dateInput = scanner.nextLine().trim();
+
+            try {
+
+                date = LocalDate.parse(dateInput);
+                break;
+
+            } catch (DateTimeParseException e) {
+
+                System.out.println(
+                        "Invalid date format. Use YYYY-MM-DD."
+                );
+            }
+        }
+
+        LocalTime time;
+
+        while (true) {
+
+            System.out.print(
+                    "Enter appointment time (HH:MM): "
+            );
+
+            String timeInput = scanner.nextLine().trim();
+
+            try {
+
+                time = LocalTime.parse(timeInput);
+                break;
+
+            } catch (DateTimeParseException e) {
+
+                System.out.println(
+                        "Invalid time format. Use HH:MM."
+                );
+            }
+        }
+
+        try {
+
+            Appointment appointment =
+                    appointmentService.bookAppointment(
+                            patientId,
+                            doctorId,
+                            date,
+                            time
+                    );
+
+            System.out.println();
+            System.out.println(
+                    "Appointment booked successfully!"
+            );
+
+            System.out.println(
+                    "Appointment ID: "
+                            + appointment.getAppointmentId()
+            );
+
+        } catch (Exception e) {
+
+            System.out.println(
+                    "Error: " + e.getMessage()
+            );
+        }
+    }
+
+    private static void viewAllAppointments() {
+
+        System.out.println();
+        System.out.println("---------- All Appointments ----------");
+
+        var appointments =
+                appointmentService.getAllAppointments();
+
+        if (appointments.isEmpty()) {
+
+            System.out.println(
+                     "No appointments found."
+            );
+
+            return;
+        }
+
+        for (Appointment appointment : appointments) {
+
+            System.out.println();
+            appointment.displayDetails();
+
+            System.out.println("---------------------------------");
+        }
+
+        System.out.println(
+                "Total Appointments: "
+                        + appointmentService.getAppointmentCount()
+        );
+    }
+
+    private static void searchAppointment() {
+
+        System.out.println();
+        System.out.println("---------- Search Appointment ----------");
+
+        System.out.print("Enter Appointment ID: ");
+        String appointmentId =
+                scanner.nextLine().trim();
+
+        try {
+
+            Appointment appointment =
+                    appointmentService.findAppointmentById(
+                            appointmentId
+                    );
+
+            System.out.println();
+            appointment.displayDetails();
+
+        } catch (InvalidAppointmentException e) {
+
+            System.out.println(
+                    "Error: " + e.getMessage()
+            );
+        }
+    }
+
+    private static void viewPatientAppointments() {
+
+        System.out.println();
+        System.out.println(
+                "---------- Patient Appointments ----------"
+        );
+
+        System.out.print("Enter Patient ID: ");
+        String patientId =
+                scanner.nextLine().trim();
+
+        try {
+
+            var appointments =
+                    appointmentService.getPatientAppointments(
+                            patientId
+                    );
+
+            if (appointments.isEmpty()) {
+
+                System.out.println(
+                        "No appointments found for this patient."
+                );
+
+                return;
+            }
+
+            for (Appointment appointment : appointments) {
+
+                System.out.println();
+                appointment.displayDetails();
+                System.out.println("---------------------------------");
+            }
+
+        } catch (Exception e) {
+
+            System.out.println(
+                    "Error: " + e.getMessage()
+            );
+        }
+    }
+
+    private static void viewDoctorAppointments() {
+
+        System.out.println();
+        System.out.println(
+                "---------- Doctor Appointments ----------"
+        );
+
+        System.out.print("Enter Doctor ID: ");
+        String doctorId =
+                scanner.nextLine().trim();
+
+        try {
+
+            var appointments =
+                    appointmentService.getDoctorAppointments(
+                            doctorId
+                    );
+
+            if (appointments.isEmpty()) {
+
+                System.out.println(
+                        "No appointments found for this doctor."
+                );
+
+                return;
+            }
+
+            for (Appointment appointment : appointments) {
+
+                System.out.println();
+                appointment.displayDetails();
+                System.out.println("---------------------------------");
+            }
+
+        } catch (Exception e) {
+
+            System.out.println(
+                    "Error: " + e.getMessage()
+            );
+        }
+    }
+
+    private static void cancelAppointment() {
+
+        System.out.println();
+        System.out.println(
+                "---------- Cancel Appointment ----------"
+        );
+
+        System.out.print("Enter Appointment ID: ");
+        String appointmentId =
+                scanner.nextLine().trim();
+
+        try {
+
+            appointmentService.cancelAppointment(
+                    appointmentId
+            );
+
+            System.out.println(
+                    "Appointment cancelled successfully."
+            );
+
+        } catch (InvalidAppointmentException e) {
+
+            System.out.println(
+                    "Error: " + e.getMessage()
+            );
+        }
+    }
+
+    private static void rescheduleAppointment() {
+
+        System.out.println();
+        System.out.println(
+                "---------- Reschedule Appointment ----------"
+        );
+
+        System.out.print("Enter Appointment ID: ");
+        String appointmentId =
+                scanner.nextLine().trim();
+
+        LocalDate newDate;
+
+        while (true) {
+
+            System.out.print(
+                    "Enter new date (YYYY-MM-DD): "
+            );
+
+            String input = scanner.nextLine().trim();
+
+            try {
+
+                newDate = LocalDate.parse(input);
+                break;
+
+            } catch (DateTimeParseException e) {
+
+                System.out.println(
+                        "Invalid date format."
+                );
+            }
+        }
+
+        LocalTime newTime;
+
+        while (true) {
+
+            System.out.print(
+                    "Enter new time (HH:MM): "
+            );
+
+            String input = scanner.nextLine().trim();
+
+            try {
+
+                newTime = LocalTime.parse(input);
+                break;
+
+            } catch (DateTimeParseException e) {
+
+                System.out.println(
+                        "Invalid time format."
+                );
+            }
+        }
+
+        try {
+
+            appointmentService.rescheduleAppointment(
+                    appointmentId,
+                    newDate,
+                    newTime
+            );
+
+            System.out.println(
+                    "Appointment rescheduled successfully."
+            );
+
+        } catch (InvalidAppointmentException e) {
+
+            System.out.println(
+                    "Error: " + e.getMessage()
+            );
+        }
+    }
+
+    private static void completeAppointment() {
+
+        System.out.println();
+        System.out.println(
+                "---------- Complete Appointment ----------"
+        );
+
+        System.out.print("Enter Appointment ID: ");
+        String appointmentId =
+                scanner.nextLine().trim();
+
+        try {
+
+            appointmentService.completeAppointment(
+                    appointmentId
+            );
+
+            System.out.println(
+                    "Appointment marked as completed."
+            );
+
+        } catch (InvalidAppointmentException e) {
+
+            System.out.println(
+                    "Error: " + e.getMessage()
             );
         }
     }
