@@ -10,6 +10,7 @@ import model.Appointment;
 import model.Doctor;
 import model.Patient;
 
+import service.ReportService;
 import service.MedicalRecordService;
 import service.QueueService;
 import service.AppointmentService;
@@ -51,6 +52,15 @@ public class Main {
                     doctorService
             );
 
+    private static final ReportService reportService =
+            new ReportService(
+                    patientService,
+                    doctorService,
+                    appointmentService,
+                    queueService,
+                    medicalRecordService
+            );
+
     public static void main(String[] args) {
 
         boolean running = true;
@@ -81,6 +91,10 @@ public class Main {
 
                 case 5:
                     medicalRecordManagementMenu();
+                    break;
+
+                case 6:
+                    reportsMenu();
                     break;
 
                 case 7:
@@ -2016,5 +2030,255 @@ public class Main {
                     "Error: " + e.getMessage()
             );
         }
+    }
+
+    private static void reportsMenu() {
+
+        while (true) {
+
+            System.out.println();
+            System.out.println("=================================");
+            System.out.println("       REPORTS & STATISTICS");
+            System.out.println("=================================");
+            System.out.println("1. Hospital Dashboard");
+            System.out.println("2. Today's Appointments");
+            System.out.println("3. Appointment Status Report");
+            System.out.println("4. Doctor-wise Appointment Report");
+            System.out.println("5. Patient-wise Appointment Report");
+            System.out.println("6. Queue Report");
+            System.out.println("7. Medical Record Report");
+            System.out.println("8. Back");
+            System.out.println("=================================");
+
+            int choice =
+                    readInteger("Enter your choice: ");
+
+            switch (choice) {
+
+                case 1:
+                    showDashboard();
+                    break;
+
+                case 2:
+                    showTodaysAppointments();
+                    break;
+
+                case 3:
+                    showAppointmentStatusReport();
+                    break;
+
+                case 4:
+                    showDoctorWiseReport();
+                    break;
+
+                case 5:
+                    showPatientWiseReport();
+                    break;
+
+                case 6:
+                    showQueueReport();
+                    break;
+
+                case 7:
+                    showMedicalRecordReport();
+                    break;
+
+                case 8:
+                    return;
+
+                default:
+                    System.out.println(
+                            "Invalid choice. Please try again."
+                    );
+            }
+        }
+    }
+
+    private static void showDashboard() {
+
+        reportService.displayDashboard();
+    }
+
+    private static void showTodaysAppointments() {
+
+        System.out.println();
+        System.out.println(
+                "---------- TODAY'S APPOINTMENTS ----------"
+        );
+
+        var appointments =
+                reportService.getTodaysAppointments();
+
+        if (appointments.isEmpty()) {
+
+            System.out.println(
+                    "No appointments scheduled for today."
+            );
+
+            return;
+        }
+
+        for (Appointment appointment :
+                appointments) {
+
+            System.out.println();
+
+            appointment.displayDetails();
+
+            System.out.println(
+                    "---------------------------------"
+            );
+        }
+
+        System.out.println(
+                "Today's Appointments: "
+                        + appointments.size()
+        );
+    }
+
+    private static void showAppointmentStatusReport() {
+
+        System.out.println();
+        System.out.println(
+                "---------- APPOINTMENT STATUS REPORT ----------"
+        );
+
+        System.out.println(
+                "Total Appointments : "
+                        + reportService
+                        .getTotalAppointments()
+        );
+
+        System.out.println(
+                "Scheduled          : "
+                        + reportService
+                        .getScheduledAppointments()
+        );
+
+        System.out.println(
+                "Completed          : "
+                        + reportService
+                        .getCompletedAppointments()
+        );
+
+        System.out.println(
+                "Cancelled          : "
+                        + reportService
+                        .getCancelledAppointments()
+        );
+
+        System.out.println(
+                "Rescheduled        : "
+                        + reportService
+                        .getRescheduledAppointments()
+        );
+    }
+
+    private static void showDoctorWiseReport() {
+
+        System.out.println();
+        System.out.println(
+                "---------- DOCTOR-WISE APPOINTMENTS ----------"
+        );
+
+        var report =
+                reportService
+                        .getDoctorWiseAppointmentCount();
+
+        if (report.isEmpty()) {
+
+            System.out.println(
+                    "No appointment data available."
+            );
+
+            return;
+        }
+
+        for (var entry : report.entrySet()) {
+
+            System.out.println(
+                    "Doctor ID: "
+                            + entry.getKey()
+                            + " | Appointments: "
+                            + entry.getValue()
+            );
+        }
+    }
+
+    private static void showPatientWiseReport() {
+
+        System.out.println();
+        System.out.println(
+                "---------- PATIENT-WISE APPOINTMENTS ----------"
+        );
+
+        var report =
+                reportService
+                        .getPatientWiseAppointmentCount();
+
+        if (report.isEmpty()) {
+
+            System.out.println(
+                    "No appointment data available."
+            );
+
+            return;
+        }
+
+        for (var entry : report.entrySet()) {
+
+            System.out.println(
+                    "Patient ID: "
+                            + entry.getKey()
+                            + " | Appointments: "
+                            + entry.getValue()
+            );
+        }
+    }
+
+    private static void showQueueReport() {
+
+        System.out.println();
+        System.out.println(
+                "---------- QUEUE REPORT ----------"
+        );
+
+        System.out.println(
+                "Currently Waiting : "
+                        + reportService
+                        .getWaitingPatients()
+        );
+
+        System.out.println(
+                "Patients Served   : "
+                        + reportService
+                        .getServedPatients()
+        );
+
+        System.out.println(
+                "Patients Removed  : "
+                        + reportService
+                        .getRemovedPatients()
+        );
+
+        System.out.println(
+                "Total Queue Entries: "
+                        + reportService
+                        .getTotalQueueEntries()
+        );
+    }
+
+    private static void showMedicalRecordReport() {
+
+        System.out.println();
+        System.out.println(
+                "---------- MEDICAL RECORD REPORT ----------"
+        );
+
+        System.out.println(
+                "Total Medical Records: "
+                        + reportService
+                        .getTotalMedicalRecords()
+        );
     }
 }
