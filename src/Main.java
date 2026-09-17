@@ -1,11 +1,14 @@
+import exception.QueueException;
 import exception.InvalidAppointmentException;
 import exception.DoctorNotFoundException;
 import exception.PatientNotFoundException;
 
+import model.QueueEntry;
 import model.Appointment;
 import model.Doctor;
 import model.Patient;
 
+import service.QueueService;
 import service.AppointmentService;
 import service.DoctorService;
 import service.PatientService;
@@ -28,10 +31,16 @@ public class Main {
             new DoctorService();
 
     private static final AppointmentService appointmentService =
-        new AppointmentService(
-                patientService,
-                doctorService
-        );
+            new AppointmentService(
+                    patientService,
+                    doctorService
+            );
+
+    private static final QueueService queueService =
+            new QueueService(
+                    patientService,
+                    appointmentService
+            );
 
     public static void main(String[] args) {
 
@@ -55,6 +64,10 @@ public class Main {
 
                 case 3:
                     appointmentManagementMenu();
+                    break;
+
+                case 4:
+                    queueManagementMenu();
                     break;
 
                 case 7:
@@ -1385,5 +1398,281 @@ public class Main {
                     "Error: " + e.getMessage()
             );
         }
+    }
+
+    private static void queueManagementMenu() {
+
+        while (true) {
+
+            System.out.println();
+            System.out.println("=================================");
+            System.out.println("        QUEUE MANAGEMENT");
+            System.out.println("=================================");
+            System.out.println("1. Add Patient to Queue");
+            System.out.println("2. View Current Queue");
+            System.out.println("3. Search Queue Entry");
+            System.out.println("4. Call Next Patient");
+            System.out.println("5. Remove Patient from Queue");
+            System.out.println("6. Queue Statistics");
+            System.out.println("7. Back");
+            System.out.println("=================================");
+
+            int choice =
+                    readInteger("Enter your choice: ");
+
+            switch (choice) {
+
+                case 1:
+                    addPatientToQueue();
+                    break;
+
+                case 2:
+                    viewCurrentQueue();
+                    break;
+
+                case 3:
+                    searchQueueEntry();
+                    break;
+
+                case 4:
+                    callNextPatient();
+                    break;
+
+                case 5:
+                    removePatientFromQueue();
+                    break;
+
+                case 6:
+                    showQueueStatistics();
+                    break;
+
+                case 7:
+                    return;
+
+                default:
+                    System.out.println(
+                            "Invalid choice. Please try again."
+                    );
+            }
+        }
+    }
+
+    private static void addPatientToQueue() {
+
+        System.out.println();
+        System.out.println(
+                "---------- Add Patient to Queue ----------"
+        );
+
+        System.out.print("Enter Patient ID: ");
+        String patientId =
+                scanner.nextLine().trim();
+
+        System.out.print(
+                "Enter Appointment ID (press Enter for walk-in): "
+        );
+
+        String appointmentId =
+                scanner.nextLine().trim();
+
+        System.out.println();
+        System.out.println("Priority Levels:");
+        System.out.println("1. Emergency");
+        System.out.println("2. Urgent");
+        System.out.println("3. Regular");
+
+        int priority =
+                readInteger("Enter priority: ");
+
+        if (appointmentId.isEmpty()) {
+            appointmentId = null;
+        }
+
+        try {
+
+            QueueEntry entry =
+                    queueService.addToQueue(
+                            patientId,
+                            appointmentId,
+                            priority
+                    );
+
+            System.out.println();
+            System.out.println(
+                    "Patient added to queue successfully!"
+            );
+
+            System.out.println(
+                    "Queue ID: "
+                            + entry.getQueueId()
+            );
+
+            System.out.println(
+                    "Priority: "
+                            + entry.getPriorityLabel()
+            );
+
+        } catch (QueueException e) {
+
+            System.out.println(
+                    "Error: " + e.getMessage()
+            );
+        }
+    }
+
+    private static void viewCurrentQueue() {
+
+        System.out.println();
+        System.out.println(
+                "---------- CURRENT QUEUE ----------"
+        );
+
+        var queue =
+                queueService.getCurrentQueue();
+
+        if (queue.isEmpty()) {
+
+            System.out.println(
+                    "No patients are currently waiting."
+            );
+
+            return;
+        }
+
+        int position = 1;
+
+        for (QueueEntry entry : queue) {
+
+            System.out.println();
+            System.out.println(
+                    "Queue Position: " + position
+            );
+
+            entry.displayDetails();
+
+            System.out.println(
+                    "---------------------------------"
+            );
+
+            position++;
+        }
+
+        System.out.println(
+                "Patients Waiting: "
+                        + queueService.getWaitingCount()
+        );
+    }
+
+    private static void searchQueueEntry() {
+
+        System.out.println();
+        System.out.println(
+                "---------- SEARCH QUEUE ENTRY ----------"
+        );
+
+        System.out.print("Enter Queue ID: ");
+        String queueId =
+                scanner.nextLine().trim();
+
+        try {
+
+            QueueEntry entry =
+                    queueService.findQueueEntry(
+                            queueId
+                    );
+
+            System.out.println();
+            entry.displayDetails();
+
+        } catch (QueueException e) {
+
+            System.out.println(
+                    "Error: " + e.getMessage()
+            );
+        }
+    }
+
+    private static void callNextPatient() {
+
+        System.out.println();
+        System.out.println(
+                "---------- CALL NEXT PATIENT ----------"
+        );
+
+        try {
+
+            QueueEntry entry =
+                    queueService.callNextPatient();
+
+            System.out.println();
+            System.out.println(
+                    "Now serving:"
+            );
+
+            entry.displayDetails();
+
+        } catch (QueueException e) {
+
+            System.out.println(
+                    "Error: " + e.getMessage()
+            );
+        }
+    }
+
+    private static void removePatientFromQueue() {
+
+        System.out.println();
+        System.out.println(
+                "---------- REMOVE FROM QUEUE ----------"
+        );
+
+        System.out.print("Enter Queue ID: ");
+        String queueId =
+                scanner.nextLine().trim();
+
+        try {
+
+            queueService.removeFromQueue(
+                    queueId
+            );
+
+            System.out.println(
+                    "Patient removed from queue successfully."
+            );
+
+        } catch (QueueException e) {
+
+            System.out.println(
+                    "Error: " + e.getMessage()
+            );
+        }
+    }
+
+    private static void showQueueStatistics() {
+
+        System.out.println();
+        System.out.println(
+                "---------- QUEUE STATISTICS ----------"
+        );
+
+        System.out.println(
+                "Currently Waiting : "
+                        + queueService.getWaitingCount()
+        );
+
+        System.out.println(
+                "Patients Served   : "
+                        + queueService.getServedCount()
+        );
+
+        System.out.println(
+                "Patients Removed  : "
+                        + queueService.getRemovedCount()
+        );
+
+        System.out.println(
+                "Total Queue Entries: "
+                        + queueService.getTotalEntries()
+        );
     }
 }

@@ -6,6 +6,7 @@ public class IDGenerator {
     private static int doctorCounter = 2000;
     private static int appointmentCounter = 3000;
     private static int recordCounter = 4000;
+    private static int queueCounter = 5000;
 
     public static String generatePatientId() {
         return "P" + (++patientCounter);
@@ -21,5 +22,9 @@ public class IDGenerator {
 
     public static String generateRecordId() {
         return "R" + (++recordCounter);
+    }
+
+    public static String generateQueueId() {
+        return "Q" + (++queueCounter);
     }
 }
