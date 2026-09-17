@@ -15,7 +15,15 @@ import java.util.Map;
 import java.util.PriorityQueue;
 import java.util.Queue;
 
+import util.FileManager;
+
+import java.io.IOException;
+import java.time.LocalDateTime;
+
 public class QueueService {
+
+    private static final String QUEUE_FILE =
+            "data/queue.txt";
 
     private final Queue<QueueEntry> patientQueue;
     private final Map<String, QueueEntry> queueHistory;
@@ -38,6 +46,8 @@ public class QueueService {
 
         this.patientService = patientService;
         this.appointmentService = appointmentService;
+
+        loadQueue();
     }
 
     // Add patient to queue
@@ -135,6 +145,8 @@ public class QueueService {
 
         queueHistory.put(queueId, entry);
 
+        saveQueue();
+
         return entry;
     }
 
@@ -193,6 +205,8 @@ public class QueueService {
                 QueueEntryStatus.SERVED
         );
 
+        saveQueue();
+
         return entry;
     }
 
@@ -225,6 +239,8 @@ public class QueueService {
         entry.setStatus(
                 QueueEntryStatus.REMOVED
         );
+
+        saveQueue();
     }
 
     public int getWaitingCount() {
@@ -269,5 +285,103 @@ public class QueueService {
     public int getTotalEntries() {
 
         return queueHistory.size();
+    }
+
+    private void saveQueue() {
+
+        List<String> lines =
+                new ArrayList<>();
+
+        for (QueueEntry entry :
+                queueHistory.values()) {
+
+            String appointmentId =
+                    entry.getAppointmentId();
+
+            if (appointmentId == null) {
+                appointmentId = "";
+            }
+
+            String line =
+                    entry.getQueueId() + "|" +
+                    entry.getPatientId() + "|" +
+                    appointmentId + "|" +
+                    entry.getPriority() + "|" +
+                    entry.getArrivalTime() + "|" +
+                    entry.getStatus();
+
+            lines.add(line);
+        }
+
+        try {
+
+            FileManager.writeToFile(
+                    QUEUE_FILE,
+                    lines
+            );
+
+        } catch (IOException e) {
+
+            System.out.println(
+                    "Warning: Unable to save queue data."
+            );
+        }
+    }
+
+    private void loadQueue() {
+
+        try {
+
+            List<String> lines =
+                    FileManager.readFromFile(
+                            QUEUE_FILE
+                    );
+
+            for (String line : lines) {
+
+                String[] data =
+                        line.split("\\|", -1);
+
+                if (data.length != 6) {
+                    continue;
+                }
+
+                String appointmentId =
+                        data[2].isEmpty()
+                                ? null
+                                : data[2];
+
+                QueueEntry entry =
+                        new QueueEntry(
+                                data[0],
+                                data[1],
+                                appointmentId,
+                                Integer.parseInt(data[3]),
+                                LocalDateTime.parse(
+                                        data[4]
+                                ),
+                                QueueEntryStatus.valueOf(
+                                        data[5]
+                                )
+                        );
+
+                queueHistory.put(
+                        entry.getQueueId(),
+                        entry
+                );
+
+                if (entry.getStatus()
+                        == QueueEntryStatus.WAITING) {
+
+                    patientQueue.add(entry);
+                }
+            }
+
+        } catch (Exception e) {
+
+            System.out.println(
+                    "Warning: Unable to load queue data."
+            );
+        }
     }
 }

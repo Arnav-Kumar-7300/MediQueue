@@ -15,7 +15,14 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
+import util.FileManager;
+
+import java.io.IOException;
+
 public class AppointmentService {
+
+    private static final String APPOINTMENT_FILE =
+            "data/appointments.txt";
 
     private final List<Appointment> appointments;
     private final PatientService patientService;
@@ -26,8 +33,11 @@ public class AppointmentService {
             DoctorService doctorService) {
 
         appointments = new ArrayList<>();
+
         this.patientService = patientService;
         this.doctorService = doctorService;
+
+        loadAppointments();
     }
 
     // Book a new appointment
@@ -100,6 +110,8 @@ public class AppointmentService {
         );
 
         appointments.add(appointment);
+
+        saveAppointments();
 
         return appointment;
     }
@@ -212,6 +224,8 @@ public class AppointmentService {
         appointment.setStatus(
                 AppointmentStatus.CANCELLED
         );
+
+        saveAppointments();
     }
 
     // Reschedule appointment
@@ -281,6 +295,8 @@ public class AppointmentService {
         appointment.setStatus(
                 AppointmentStatus.RESCHEDULED
         );
+
+        saveAppointments();
     }
 
     // Mark appointment as completed
@@ -302,6 +318,8 @@ public class AppointmentService {
         appointment.setStatus(
                 AppointmentStatus.COMPLETED
         );
+
+        saveAppointments();
     }
 
     public int getAppointmentCount() {
@@ -322,5 +340,87 @@ public class AppointmentService {
         }
 
         return count;
+    }
+
+    private void saveAppointments() {
+
+        List<String> lines =
+                new ArrayList<>();
+
+        for (Appointment appointment :
+                appointments) {
+
+            String line =
+                    appointment.getAppointmentId() + "|" +
+                    appointment.getPatientId() + "|" +
+                    appointment.getDoctorId() + "|" +
+                    appointment.getDate() + "|" +
+                    appointment.getTime() + "|" +
+                    appointment.getStatus();
+
+            lines.add(line);
+        }
+
+        try {
+
+            FileManager.writeToFile(
+                    APPOINTMENT_FILE,
+                    lines
+            );
+
+        } catch (IOException e) {
+
+            System.out.println(
+                    "Warning: Unable to save appointment data."
+            );
+        }
+    }
+
+    private void loadAppointments() {
+
+        try {
+
+            List<String> lines =
+                    FileManager.readFromFile(
+                            APPOINTMENT_FILE
+                    );
+
+            for (String line : lines) {
+
+                String[] data =
+                        line.split("\\|", -1);
+
+                if (data.length != 6) {
+                    continue;
+                }
+
+                Appointment appointment =
+                        new Appointment(
+                                data[0],
+                                data[1],
+                                data[2],
+                                java.time.LocalDate.parse(
+                                        data[3]
+                                ),
+                                java.time.LocalTime.parse(
+                                        data[4]
+                                )
+                        );
+
+                appointment.setStatus(
+                        model.AppointmentStatus.valueOf(
+                                data[5]
+                        )
+                );
+
+                appointments.add(appointment);
+            }
+
+        } catch (Exception e) {
+
+            System.out.println(
+                    "Warning: Unable to load appointment data."
+            );
+        }
     }
 }

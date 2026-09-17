@@ -7,12 +7,22 @@ import util.IDGenerator;
 import java.util.ArrayList;
 import java.util.List;
 
+import util.FileManager;
+
+import java.io.IOException;
+
 public class DoctorService {
+
+    private static final String DOCTOR_FILE =
+            "data/doctors.txt";
 
     private final List<Doctor> doctors;
 
     public DoctorService() {
+
         doctors = new ArrayList<>();
+
+        loadDoctors();
     }
 
     // Add a new doctor
@@ -35,6 +45,8 @@ public class DoctorService {
         );
 
         doctors.add(doctor);
+
+        saveDoctors();
 
         return doctor;
     }
@@ -96,6 +108,8 @@ public class DoctorService {
         doctor.setEmail(email);
         doctor.setSpecialization(specialization);
         doctor.setQualification(qualification);
+
+        saveDoctors();
     }
 
     // Delete doctor
@@ -105,6 +119,8 @@ public class DoctorService {
         Doctor doctor = findDoctorById(doctorId);
 
         doctors.remove(doctor);
+
+        saveDoctors();
     }
 
     // Change doctor availability
@@ -116,6 +132,8 @@ public class DoctorService {
         Doctor doctor = findDoctorById(doctorId);
 
         doctor.setAvailable(available);
+
+        saveDoctors();
     }
 
     // Count total doctors
@@ -137,5 +155,82 @@ public class DoctorService {
         }
 
         return count;
+    }
+
+    private void saveDoctors() {
+
+        List<String> lines =
+                new ArrayList<>();
+
+        for (Doctor doctor : doctors) {
+
+            String line =
+                    doctor.getId() + "|" +
+                    doctor.getName() + "|" +
+                    doctor.getPhone() + "|" +
+                    doctor.getEmail() + "|" +
+                    doctor.getSpecialization() + "|" +
+                    doctor.getQualification() + "|" +
+                    doctor.isAvailable();
+
+            lines.add(line);
+        }
+
+        try {
+
+            FileManager.writeToFile(
+                    DOCTOR_FILE,
+                    lines
+            );
+
+        } catch (IOException e) {
+
+            System.out.println(
+                    "Warning: Unable to save doctor data."
+            );
+        }
+    }
+
+    private void loadDoctors() {
+
+        try {
+
+            List<String> lines =
+                    FileManager.readFromFile(
+                            DOCTOR_FILE
+                    );
+
+            for (String line : lines) {
+
+                String[] data =
+                        line.split("\\|", -1);
+
+                if (data.length != 7) {
+                    continue;
+                }
+
+                Doctor doctor =
+                        new Doctor(
+                                data[0],
+                                data[1],
+                                data[2],
+                                data[3],
+                                data[4],
+                                data[5]
+                        );
+
+                doctor.setAvailable(
+                        Boolean.parseBoolean(data[6])
+                );
+
+                doctors.add(doctor);
+            }
+
+        } catch (Exception e) {
+
+            System.out.println(
+                    "Warning: Unable to load doctor data."
+            );
+        }
     }
 }

@@ -1,0 +1,2 @@
+P1001|arnav|0987654321|arn@.com|18|Male|O+
+P1002|mitthu|1234567890|mitt@.com|17|Male|O-

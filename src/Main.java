@@ -22,6 +22,7 @@ import java.time.LocalTime;
 import java.time.format.DateTimeParseException;
 
 import util.InputValidator;
+import util.IDGenerator;
 
 import java.util.Scanner;
 
@@ -62,6 +63,8 @@ public class Main {
             );
 
     public static void main(String[] args) {
+
+        IDGenerator.initialize();
 
         boolean running = true;
 

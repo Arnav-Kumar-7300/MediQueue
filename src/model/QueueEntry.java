@@ -93,4 +93,20 @@ public class QueueEntry {
                 return "REGULAR";
         }
     }
+
+    public QueueEntry(
+        String queueId,
+        String patientId,
+        String appointmentId,
+        int priority,
+        LocalDateTime arrivalTime,
+        QueueEntryStatus status) {
+
+    this.queueId = queueId;
+    this.patientId = patientId;
+    this.appointmentId = appointmentId;
+    this.priority = priority;
+    this.arrivalTime = arrivalTime;
+    this.status = status;
+}
 }

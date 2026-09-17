@@ -12,7 +12,14 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
+import util.FileManager;
+
+import java.io.IOException;
+
 public class MedicalRecordService {
+
+    private static final String RECORD_FILE =
+        "data/medical_records.txt";
 
     private final List<MedicalRecord> medicalRecords;
     private final PatientService patientService;
@@ -26,6 +33,8 @@ public class MedicalRecordService {
 
         this.patientService = patientService;
         this.doctorService = doctorService;
+
+        loadMedicalRecords();
     }
 
     // Add a new medical record
@@ -94,6 +103,8 @@ public class MedicalRecordService {
                 );
 
         medicalRecords.add(record);
+
+        saveMedicalRecords();
 
         return record;
     }
@@ -204,9 +215,86 @@ public class MedicalRecordService {
                 findMedicalRecordById(recordId);
 
         medicalRecords.remove(record);
+
+        saveMedicalRecords();
     }
 
     public int getMedicalRecordCount() {
         return medicalRecords.size();
+    }
+
+    private void saveMedicalRecords() {
+
+        List<String> lines =
+                new ArrayList<>();
+
+        for (MedicalRecord record :
+                medicalRecords) {
+
+            String line =
+                    record.getRecordId() + "|" +
+                    record.getPatientId() + "|" +
+                    record.getDoctorId() + "|" +
+                    record.getDate() + "|" +
+                    record.getDiagnosis() + "|" +
+                    record.getPrescription() + "|" +
+                    record.getNotes();
+
+            lines.add(line);
+        }
+
+        try {
+
+            FileManager.writeToFile(
+                    RECORD_FILE,
+                    lines
+            );
+
+        } catch (IOException e) {
+
+            System.out.println(
+                    "Warning: Unable to save medical records."
+            );
+        }
+    }
+
+    private void loadMedicalRecords() {
+
+        try {
+
+            List<String> lines =
+                    FileManager.readFromFile(
+                            RECORD_FILE
+                    );
+
+            for (String line : lines) {
+
+                String[] data =
+                        line.split("\\|", -1);
+
+                if (data.length != 7) {
+                    continue;
+                }
+
+                MedicalRecord record =
+                        new MedicalRecord(
+                                data[0],
+                                data[1],
+                                data[2],
+                                LocalDate.parse(data[3]),
+                                data[4],
+                                data[5],
+                                data[6]
+                        );
+
+                medicalRecords.add(record);
+            }
+
+        } catch (Exception e) {
+
+            System.out.println(
+                    "Warning: Unable to load medical records."
+            );
+        }
     }
 }
