@@ -18,7 +18,7 @@ public class InputValidator {
     public static boolean isValidEmail(String email) {
 
         return email != null
-                && email.matches("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$");
+                && email.matches("^[A-Za-z0-9+_.-]+@[A-Za-z0-9-]+.com+$");
     }
 
     public static boolean isValidAge(int age) {
