@@ -1,13 +1,16 @@
+import exception.MedicalRecordException;
 import exception.QueueException;
 import exception.InvalidAppointmentException;
 import exception.DoctorNotFoundException;
 import exception.PatientNotFoundException;
 
+import model.MedicalRecord;
 import model.QueueEntry;
 import model.Appointment;
 import model.Doctor;
 import model.Patient;
 
+import service.MedicalRecordService;
 import service.QueueService;
 import service.AppointmentService;
 import service.DoctorService;
@@ -42,6 +45,12 @@ public class Main {
                     appointmentService
             );
 
+    private static final MedicalRecordService medicalRecordService =
+            new MedicalRecordService(
+                    patientService,
+                    doctorService
+            );
+
     public static void main(String[] args) {
 
         boolean running = true;
@@ -68,6 +77,10 @@ public class Main {
 
                 case 4:
                     queueManagementMenu();
+                    break;
+
+                case 5:
+                    medicalRecordManagementMenu();
                     break;
 
                 case 7:
@@ -1674,5 +1687,334 @@ public class Main {
                 "Total Queue Entries: "
                         + queueService.getTotalEntries()
         );
+    }
+
+    private static void medicalRecordManagementMenu() {
+
+        while (true) {
+
+            System.out.println();
+            System.out.println("=================================");
+            System.out.println("      MEDICAL RECORDS");
+            System.out.println("=================================");
+            System.out.println("1. Add Medical Record");
+            System.out.println("2. View All Medical Records");
+            System.out.println("3. Search Medical Record");
+            System.out.println("4. View Patient Medical History");
+            System.out.println("5. View Doctor Records");
+            System.out.println("6. Delete Medical Record");
+            System.out.println("7. Back");
+            System.out.println("=================================");
+
+            int choice =
+                    readInteger("Enter your choice: ");
+
+            switch (choice) {
+
+                case 1:
+                    addMedicalRecord();
+                    break;
+
+                case 2:
+                    viewAllMedicalRecords();
+                    break;
+
+                case 3:
+                    searchMedicalRecord();
+                    break;
+
+                case 4:
+                    viewPatientMedicalHistory();
+                    break;
+
+                case 5:
+                    viewDoctorMedicalRecords();
+                    break;
+
+                case 6:
+                    deleteMedicalRecord();
+                    break;
+
+                case 7:
+                    return;
+
+                default:
+                    System.out.println(
+                            "Invalid choice. Please try again."
+                    );
+            }
+        }
+    }
+
+    private static void addMedicalRecord() {
+
+        System.out.println();
+        System.out.println(
+                "---------- ADD MEDICAL RECORD ----------"
+        );
+
+        try {
+            System.out.print("Enter Patient ID: ");
+            String patientId = scanner.nextLine().trim();
+
+            Patient patient = patientService.findPatientById(patientId);
+
+            System.out.println("Patient found: " + patient.getName());
+
+            System.out.print("Enter Doctor ID: ");
+            String doctorId = scanner.nextLine().trim();
+
+            Doctor doctor = doctorService.findDoctorById(doctorId);
+
+            System.out.println("Doctor found: " + doctor.getName());
+
+            System.out.print("Enter Record Date (YYYY-MM-DD): ");
+            LocalDate date = LocalDate.parse(scanner.nextLine().trim());
+
+            System.out.print("Enter Diagnosis: ");
+            String diagnosis = scanner.nextLine().trim();
+
+            System.out.print("Enter Prescription: ");
+            String prescription = scanner.nextLine().trim();
+
+            System.out.print("Enter Notes: ");
+            String notes = scanner.nextLine().trim();
+
+            MedicalRecord record = medicalRecordService.addMedicalRecord(
+                    patientId,
+                    doctorId,
+                    date,
+                    diagnosis,
+                    prescription,
+                    notes
+            );
+
+            System.out.println("\nMedical record added successfully!");
+            System.out.println("Record ID: " + record.getRecordId());
+
+        } catch (PatientNotFoundException e) {
+
+            System.out.println("\nError: " + e.getMessage());
+
+        } catch (DoctorNotFoundException e) {
+
+            System.out.println("\nError: " + e.getMessage());
+
+        } catch (Exception e) {
+
+            System.out.println("\nError: " + e.getMessage());
+        }
+    }
+
+    private static void viewAllMedicalRecords() {
+
+        System.out.println();
+        System.out.println(
+                "---------- ALL MEDICAL RECORDS ----------"
+        );
+
+        var records =
+                medicalRecordService
+                        .getAllMedicalRecords();
+
+        if (records.isEmpty()) {
+
+            System.out.println(
+                    "No medical records found."
+            );
+
+            return;
+        }
+
+        for (MedicalRecord record : records) {
+
+            System.out.println();
+
+            record.displayDetails();
+
+            System.out.println(
+                    "---------------------------------"
+            );
+        }
+
+        System.out.println(
+                "Total Medical Records: "
+                        + medicalRecordService
+                        .getMedicalRecordCount()
+        );
+    }
+
+    private static void searchMedicalRecord() {
+
+        System.out.println();
+        System.out.println(
+                "---------- SEARCH MEDICAL RECORD ----------"
+        );
+
+        System.out.print("Enter Record ID: ");
+        String recordId =
+                scanner.nextLine().trim();
+
+        try {
+
+            MedicalRecord record =
+                    medicalRecordService
+                            .findMedicalRecordById(
+                                    recordId
+                            );
+
+            System.out.println();
+
+            record.displayDetails();
+
+        } catch (MedicalRecordException e) {
+
+            System.out.println(
+                    "Error: " + e.getMessage()
+            );
+        }
+    }
+
+    private static void viewPatientMedicalHistory() {
+
+        System.out.println();
+        System.out.println(
+                "---------- PATIENT MEDICAL HISTORY ----------"
+        );
+
+        System.out.print("Enter Patient ID: ");
+        String patientId =
+                scanner.nextLine().trim();
+
+        try {
+
+            var records =
+                    medicalRecordService
+                            .getPatientMedicalHistory(
+                                    patientId
+                            );
+
+            if (records.isEmpty()) {
+
+                System.out.println(
+                        "No medical history found for this patient."
+                );
+
+                return;
+            }
+
+            System.out.println(
+                    "Medical History for Patient: "
+                            + patientId
+            );
+
+            for (MedicalRecord record : records) {
+
+                System.out.println();
+
+                record.displayDetails();
+
+                System.out.println(
+                        "---------------------------------"
+                );
+            }
+
+        } catch (PatientNotFoundException e) {
+
+            System.out.println(
+                    "Error: " + e.getMessage()
+            );
+        }
+    }
+
+    private static void viewDoctorMedicalRecords() {
+
+        System.out.println();
+        System.out.println(
+                "---------- DOCTOR MEDICAL RECORDS ----------"
+        );
+
+        System.out.print("Enter Doctor ID: ");
+        String doctorId =
+                scanner.nextLine().trim();
+
+        try {
+
+            var records =
+                    medicalRecordService
+                            .getDoctorMedicalRecords(
+                                        doctorId
+                            );
+
+            if (records.isEmpty()) {
+
+                System.out.println(
+                        "No medical records found for this doctor."
+                );
+
+                return;
+            }
+
+            for (MedicalRecord record : records) {
+
+                System.out.println();
+
+                record.displayDetails();
+
+                System.out.println(
+                        "---------------------------------"
+                );
+            }
+
+        } catch (DoctorNotFoundException e) {
+
+            System.out.println(
+                    "Error: " + e.getMessage()
+            );
+        }
+    }
+
+    private static void deleteMedicalRecord() {
+
+        System.out.println();
+        System.out.println(
+                "---------- DELETE MEDICAL RECORD ----------"
+        );
+
+        System.out.print("Enter Record ID: ");
+        String recordId =
+                scanner.nextLine().trim();
+
+        System.out.print(
+                "Are you sure you want to delete this record? (yes/no): "
+        );
+
+        String confirmation =
+                scanner.nextLine().trim();
+
+        if (!confirmation.equalsIgnoreCase("yes")) {
+
+            System.out.println(
+                    "Delete operation cancelled."
+            );
+
+            return;
+        }
+
+        try {
+
+            medicalRecordService
+                    .deleteMedicalRecord(recordId);
+
+            System.out.println(
+                    "Medical record deleted successfully."
+            );
+
+        } catch (MedicalRecordException e) {
+
+            System.out.println(
+                    "Error: " + e.getMessage()
+            );
+        }
     }
 }
